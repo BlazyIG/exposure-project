@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROJECT: EXPOSURE // MOBILE OPTIMIZED</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PROJECT: EXPOSURE // MOBILE FIX</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,9 +34,10 @@
             font-family: var(--font-code);
             overflow: hidden;
             width: 100vw;
-            height: 100vh;
-            /* Fix para móviles para evitar scroll elástico */
-            position: fixed; 
+            /* Usamos dvh para adaptarnos a las barras del navegador móvil */
+            height: 100vh; 
+            height: 100dvh; 
+            position: fixed;
         }
 
         /* --- CÁMARA Y CANVAS --- */
@@ -45,7 +46,6 @@
         }
         .input_video { display: none; }
         
-        /* Ajuste crítico para móvil: cover para llenar pantalla */
         .output_canvas {
             width: 100%; height: 100%;
             object-fit: cover;
@@ -58,24 +58,23 @@
             background-size: 100% 3px; pointer-events: none; z-index: 5; opacity: 0.5;
         }
 
-        /* --- INTERFAZ HUD (GRID ADAPTATIVO) --- */
+        /* --- INTERFAZ HUD --- */
         #hud-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
             padding: 15px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            /* Quitamos flex column global para posicionar libremente */
+            display: block; 
             pointer-events: none;
         }
 
-        /* Header Compacto */
+        /* Header */
         .hud-top {
             display: flex; justify-content: space-between; align-items: flex-start;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
-            padding-bottom: 20px;
+            width: 100%;
+            margin-bottom: 20px;
         }
 
-        /* Paneles de datos flotantes */
+        /* Paneles de datos */
         .panel-data {
             font-size: 0.75rem; 
             background: rgba(0,0,0,0.4);
@@ -83,6 +82,7 @@
             padding: 8px;
             border-left: 2px solid var(--neon-cyan);
             margin-bottom: 5px;
+            width: fit-content;
         }
 
         h1 {
@@ -99,47 +99,59 @@
             padding: 2px 5px; border-radius: 2px; letter-spacing: 1px;
         }
 
-        /* Barra de Amenaza (Threat) */
+        /* Barra de Amenaza */
         .threat-container {
-            position: absolute;
-            top: 70px; left: 15px; right: 15px;
+            width: 100%;
             display: flex; align-items: center; gap: 10px;
+            margin-bottom: 20px;
         }
         .threat-label { font-family: var(--font-display); font-size: 1rem; color: #fff; width: 70px; }
         .threat-track { flex-grow: 1; height: 6px; background: rgba(255,255,255,0.2); position: relative; }
         .threat-fill { height: 100%; width: 0%; background: var(--neon-cyan); transition: width 0.2s, background-color 0.2s; box-shadow: 0 0 10px var(--neon-cyan); }
 
-        /* Footer y Botón Principal */
+        /* --- CORRECCIÓN DEL FOOTER Y BOTÓN --- */
         .hud-bottom {
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
-            padding-top: 20px;
-            pointer-events: auto; /* Permitir clicks */
+            position: absolute;
+            /* Lo subimos considerablemente para evitar la barra del navegador */
+            bottom: 15%; 
+            left: 0;
+            width: 100%;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px;
+            pointer-events: auto; /* IMPORTANTE: para poder hacer click */
+            z-index: 100;
+        }
+
+        /* Si la pantalla es muy alta, lo pegamos un poco más abajo, pero seguro */
+        @media (min-height: 800px) {
+            .hud-bottom { bottom: 120px; }
         }
 
         #forbidden-btn {
             background: rgba(255, 0, 60, 0.15);
             border: 2px solid var(--neon-red);
             color: var(--neon-red);
-            padding: 18px 20px;
-            width: 100%;
-            max-width: 400px;
+            padding: 20px 30px;
+            width: 90%; /* Más ancho para que sea fácil de tocar */
+            max-width: 350px;
             font-family: var(--font-display);
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
-            box-shadow: 0 0 20px rgba(255, 0, 60, 0.3);
+            box-shadow: 0 0 30px rgba(255, 0, 60, 0.4); /* Glow más fuerte */
             transition: all 0.2s;
             text-align: center;
+            backdrop-filter: blur(5px);
         }
-        #forbidden-btn:active { background: var(--neon-red); color: #000; transform: scale(0.98); }
-        .btn-subtext { display: block; font-size: 0.7rem; font-weight: 400; opacity: 0.8; margin-top: 5px; font-family: var(--font-code); }
+        #forbidden-btn:active { background: var(--neon-red); color: #000; transform: scale(0.95); }
+        .btn-subtext { display: block; font-size: 0.7rem; font-weight: 400; opacity: 0.9; margin-top: 5px; font-family: var(--font-code); color: #fff; }
 
-        /* Información del sistema (versión móvil reducida) */
         .sys-info-mobile {
-            display: flex; gap: 10px; font-size: 0.65rem; color: #888;
-            margin-bottom: 10px;
+            display: flex; gap: 10px; font-size: 0.7rem; color: #aaa;
+            background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px;
         }
 
         /* --- MATRIX MODE --- */
@@ -167,11 +179,11 @@
             gap: 15px;
             padding: 20px;
             opacity: 0; animation: fadeIn 0.5s forwards;
-            overflow-y: auto; /* Permitir scroll si la pantalla es muy pequeña */
+            overflow-y: auto;
         }
 
         #captured-image {
-            width: 80vw; /* Ancho relativo al móvil */
+            width: 80vw;
             max-width: 400px;
             border: 2px solid var(--neon-red);
             box-shadow: 0 0 30px var(--neon-red);
@@ -217,6 +229,7 @@
     <div class="scanlines"></div>
 
     <div id="hud-layer">
+        
         <div class="hud-top">
             <div>
                 <h1>EXPOSURE</h1>
@@ -230,20 +243,21 @@
             <div class="threat-track"><div class="threat-fill" id="threat-fill"></div></div>
         </div>
 
-        <div style="position: absolute; top: 110px; left: 15px;">
+        <div>
             <div class="panel-data">FACE: <span id="face-state" style="color:#fff">SCAN...</span></div>
             <div class="panel-data">HANDS: <span id="hand-state" style="color:#fff">SCAN...</span></div>
             <div class="panel-data">LOC: <span id="mini-coords" style="font-size:0.65rem;">--.--, --.--</span></div>
         </div>
 
         <div class="hud-bottom">
-            <div class="sys-info-mobile">
-                <span id="info-os">OS DETECT</span> | <span id="info-time">00:00</span>
-            </div>
             <button id="forbidden-btn" onclick="initiateSequence()">
                 DO NOT PRESS
                 <span class="btn-subtext">IF YOU DON'T WANT TO BE EXPOSED</span>
             </button>
+            
+            <div class="sys-info-mobile">
+                <span id="info-os">OS DETECT</span> | <span id="info-time">00:00</span>
+            </div>
         </div>
     </div>
 
@@ -317,7 +331,6 @@
 
         // --- DATA & GEO ---
         function gatherData() {
-            // Simple OS detection for mobile
             const ua = navigator.userAgent;
             let os = "UNKNOWN";
             if (/Android/i.test(ua)) os = "ANDROID OS";
@@ -360,15 +373,13 @@
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
-            // FIX CRÍTICO PARA MÓVIL: Asegurar que el canvas tenga el tamaño de la ventana
             canvasElement.width = window.innerWidth;
             canvasElement.height = window.innerHeight;
 
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             
-            // Dibujar video (con object-fit cover simulado)
-            // Calculamos proporciones para mantener el aspect ratio sin deformar
+            // Cálculo de "cover" para el video
             const vidW = videoElement.videoWidth;
             const vidH = videoElement.videoHeight;
             const screenW = canvasElement.width;
@@ -379,7 +390,6 @@
 
             canvasCtx.drawImage(results.image, xOffset, yOffset, vidW * scale, vidH * scale);
             
-            // Overlay oscuro
             canvasCtx.fillStyle = "rgba(0, 10, 15, 0.3)";
             canvasCtx.fillRect(0, 0, screenW, screenH);
 
@@ -399,15 +409,9 @@
                 if (results.faceLandmarks) {
                     document.getElementById('face-state').innerText = "ID OK";
                     document.getElementById('face-state').style.color = config.colors.safe;
-                    
                     drawConnectors(canvasCtx, results.faceLandmarks, FACEMESH_FACE_OVAL, {color: 'rgba(0, 243, 255, 0.4)', lineWidth: 1});
                     
                     const nose = results.faceLandmarks[1];
-                    // Re-mapear coordenadas normalizadas a coordenadas de pantalla escaladas
-                    // Esto es complejo en "cover", usamos una aprox simple para efectos visuales:
-                    const nx = nose.x * screenW; 
-                    const ny = nose.y * screenH;
-                    
                     updateThreat(nose);
                 } else {
                     document.getElementById('face-state').innerText = "SCAN";
@@ -515,12 +519,12 @@
         initGeo();
 
         const holistic = new Holistic({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`});
-        holistic.setOptions({ modelComplexity: 0, smoothLandmarks: true, enableSegmentation: false, refineFaceLandmarks: false }); // Modelo ligero para móvil
+        holistic.setOptions({ modelComplexity: 0, smoothLandmarks: true, enableSegmentation: false, refineFaceLandmarks: false });
         holistic.onResults(onResults);
 
         const camera = new Camera(videoElement, {
             onFrame: async () => { await holistic.send({image: videoElement}); },
-            width: 1280, height: 720 // MediaPipe ajustará esto internamente, nosotros manejamos el canvas
+            width: 1280, height: 720
         });
         camera.start().then(() => {
             document.getElementById('sys-status').innerText = "ONLINE";
