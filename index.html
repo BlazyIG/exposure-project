@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PROJECT: EXPOSURE // MOBILE FIX</title>
+    <title>PROJECT: EXPOSURE // IOS FIX</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,494 +19,361 @@
             --neon-red: #ff003c;
             --neon-cyan: #00f3ff;
             --neon-green: #0aff0a;
-            --neon-yellow: #ffbd00;
-            --glass: rgba(5, 10, 15, 0.75);
-            --border: 1px solid rgba(0, 243, 255, 0.3);
+            --glass: rgba(0, 0, 0, 0.6);
             --font-display: 'Rajdhani', sans-serif;
             --font-code: 'JetBrains Mono', monospace;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
-
-        body {
+        /* RESET TOTAL PARA EVITAR SCROLL */
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; 
+            height: 100%; 
+            height: 100dvh; /* Altura dinámica real del iPhone */
+            overflow: hidden; /* Bloquea el scroll elástico de Safari */
             background-color: #000;
-            color: var(--neon-cyan);
             font-family: var(--font-code);
-            overflow: hidden;
-            width: 100vw;
-            /* Usamos dvh para adaptarnos a las barras del navegador móvil */
-            height: 100vh; 
-            height: 100dvh; 
-            position: fixed;
+            color: var(--neon-cyan);
+            -webkit-user-select: none; user-select: none;
+            position: fixed; /* Fija el body para que no se mueva */
         }
 
-        /* --- CÁMARA Y CANVAS --- */
+        /* --- VIDEO LAYER (FONDO) --- */
         #viewport {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #000;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
         }
         .input_video { display: none; }
-        
         .output_canvas {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
+            width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
         }
-
         .scanlines {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
-            background-size: 100% 3px; pointer-events: none; z-index: 5; opacity: 0.5;
+            position: absolute; top:0; left:0; width:100%; height:100%; z-index: 2;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; pointer-events: none;
         }
 
-        /* --- INTERFAZ HUD --- */
-        #hud-layer {
+        /* --- UI LAYER (FLEXBOX) --- */
+        /* Esta es la clave: Usamos Flexbox para distribuir el espacio verticalmente */
+        #ui-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Empuja cabecera arriba y footer abajo */
             padding: 15px;
-            /* Quitamos flex column global para posicionar libremente */
-            display: block; 
-            pointer-events: none;
+            /* Respetar el 'Notch' y la barra inferior del iPhone */
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+            pointer-events: none; /* Dejar pasar clicks al canvas si es necesario */
         }
 
-        /* Header */
-        .hud-top {
-            display: flex; justify-content: space-between; align-items: flex-start;
+        /* SECCIÓN SUPERIOR */
+        .ui-top {
+            pointer-events: auto;
             width: 100%;
-            margin-bottom: 20px;
         }
+        .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        h1 { margin: 0; font-family: var(--font-display); font-size: 1.5rem; line-height: 1; color: #fff; text-shadow: 0 0 10px var(--neon-cyan); }
+        .badge { border: 1px solid var(--neon-cyan); padding: 2px 6px; font-size: 0.7rem; color: var(--neon-cyan); }
 
-        /* Paneles de datos */
-        .panel-data {
-            font-size: 0.75rem; 
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
-            padding: 8px;
-            border-left: 2px solid var(--neon-cyan);
-            margin-bottom: 5px;
-            width: fit-content;
-        }
+        .threat-box { margin-bottom: 10px; }
+        .threat-label { font-family: var(--font-display); font-size: 0.9rem; color: #fff; margin-bottom: 2px; }
+        .bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.2); }
+        .bar-fill { height: 100%; width: 0%; background: var(--neon-red); transition: width 0.3s; box-shadow: 0 0 8px var(--neon-red); }
 
-        h1 {
-            font-family: var(--font-display);
-            font-size: 1.4rem; 
-            letter-spacing: 2px; 
-            color: #fff; 
-            text-shadow: 0 0 10px var(--neon-cyan);
-            line-height: 1;
-        }
-        
-        .status-badge {
-            font-size: 0.7rem; color: var(--neon-yellow); border: 1px solid var(--neon-yellow);
-            padding: 2px 5px; border-radius: 2px; letter-spacing: 1px;
-        }
+        .data-panel { font-size: 0.7rem; background: rgba(0,0,0,0.5); padding: 5px; border-left: 2px solid var(--neon-cyan); margin-bottom: 4px; width: fit-content; }
 
-        /* Barra de Amenaza */
-        .threat-container {
+        /* SECCIÓN INFERIOR (BOTÓN) */
+        .ui-bottom {
+            pointer-events: auto; /* IMPORTANTE: Reactivar clicks aquí */
             width: 100%;
-            display: flex; align-items: center; gap: 10px;
-            margin-bottom: 20px;
-        }
-        .threat-label { font-family: var(--font-display); font-size: 1rem; color: #fff; width: 70px; }
-        .threat-track { flex-grow: 1; height: 6px; background: rgba(255,255,255,0.2); position: relative; }
-        .threat-fill { height: 100%; width: 0%; background: var(--neon-cyan); transition: width 0.2s, background-color 0.2s; box-shadow: 0 0 10px var(--neon-cyan); }
-
-        /* --- CORRECCIÓN DEL FOOTER Y BOTÓN --- */
-        .hud-bottom {
-            position: absolute;
-            /* Lo subimos considerablemente para evitar la barra del navegador */
-            bottom: 15%; 
-            left: 0;
-            width: 100%;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 15px;
-            pointer-events: auto; /* IMPORTANTE: para poder hacer click */
-            z-index: 100;
-        }
-
-        /* Si la pantalla es muy alta, lo pegamos un poco más abajo, pero seguro */
-        @media (min-height: 800px) {
-            .hud-bottom { bottom: 120px; }
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            /* Margen de seguridad extra para que no pegue con la barra de navegación */
+            margin-bottom: 20px; 
         }
 
         #forbidden-btn {
             background: rgba(255, 0, 60, 0.15);
             border: 2px solid var(--neon-red);
             color: var(--neon-red);
-            padding: 20px 30px;
-            width: 90%; /* Más ancho para que sea fácil de tocar */
-            max-width: 350px;
+            padding: 20px 0; /* Altura generosa */
+            width: 100%; 
             font-family: var(--font-display);
             font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
-            box-shadow: 0 0 30px rgba(255, 0, 60, 0.4); /* Glow más fuerte */
-            transition: all 0.2s;
+            box-shadow: 0 0 25px rgba(255, 0, 60, 0.4);
+            backdrop-filter: blur(4px);
             text-align: center;
-            backdrop-filter: blur(5px);
+            /* Fix para iOS tap highlight */
+            -webkit-tap-highlight-color: transparent; 
         }
-        #forbidden-btn:active { background: var(--neon-red); color: #000; transform: scale(0.95); }
-        .btn-subtext { display: block; font-size: 0.7rem; font-weight: 400; opacity: 0.9; margin-top: 5px; font-family: var(--font-code); color: #fff; }
+        #forbidden-btn:active { background: var(--neon-red); color: #000; }
+        .btn-small { font-size: 0.65rem; font-weight: normal; opacity: 0.8; display: block; margin-top: 5px; font-family: var(--font-code); }
 
-        .sys-info-mobile {
-            display: flex; gap: 10px; font-size: 0.7rem; color: #aaa;
-            background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px;
-        }
+        .footer-info { font-size: 0.6rem; color: #888; text-align: center; }
 
-        /* --- MATRIX MODE --- */
-        #matrix-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 50; display: none;
+        /* --- MATRIX & RESULT LAYERS --- */
+        #matrix-layer, #result-layer, #truth-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 50; display: none; background: #000;
         }
+        #matrix-layer { z-index: 50; }
+        #result-layer { z-index: 60; background: rgba(5,5,5,0.98); padding: 20px; flex-direction: column; justify-content: center; align-items: center; overflow-y: auto; }
+        #truth-layer { z-index: 70; padding: 30px; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+
         #system-msg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%;
-            color: var(--neon-green); font-size: 1.5rem; font-family: var(--font-code);
-            text-shadow: 0 0 10px var(--neon-green);
-            background: rgba(0,0,0,0.9); padding: 20px; border: 1px solid var(--neon-green);
-            text-align: center;
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; text-align: center; color: var(--neon-green); font-size: 1.2rem;
+            border: 1px solid var(--neon-green); padding: 15px; background: rgba(0,0,0,0.8);
         }
 
-        /* --- RESULTADOS --- */
-        #result-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 60;
-            background: rgba(5, 5, 5, 0.98);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            opacity: 0; animation: fadeIn 0.5s forwards;
-            overflow-y: auto;
-        }
+        #captured-image { width: 80%; max-width: 350px; border: 2px solid var(--neon-red); margin-bottom: 20px; filter: grayscale(1) contrast(1.2); }
+        .res-text { text-align: center; margin-bottom: 15px; }
+        .res-big { font-size: 1.2rem; color: #fff; display: block; }
+        .res-lbl { font-size: 0.7rem; color: #666; letter-spacing: 2px; }
 
-        #captured-image {
-            width: 80vw;
-            max-width: 400px;
-            border: 2px solid var(--neon-red);
-            box-shadow: 0 0 30px var(--neon-red);
-            filter: grayscale(100%) contrast(1.2);
-            margin-bottom: 10px;
-        }
-
-        .result-title { font-size: 2rem; color: var(--neon-red); font-family: var(--font-display); text-shadow: 0 0 15px var(--neon-red); text-align: center; margin-bottom: 10px; }
-        .result-data-group { text-align: center; margin-bottom: 10px; }
-        .result-label { color: #666; font-size: 0.8rem; display: block; letter-spacing: 2px; margin-bottom: 2px; }
-        .result-val { color: #fff; font-size: 1.2rem; display: block; text-shadow: 0 0 5px #fff; font-weight: bold;}
-
-        .btn-reveal {
-            background: transparent; border: 1px solid #fff; color: #fff;
-            padding: 15px 30px; cursor: pointer; font-family: var(--font-display); letter-spacing: 2px;
-            font-size: 1rem; margin-top: 10px; width: 80%; max-width: 300px;
-        }
-
-        /* --- VERDAD (TRUTH LAYER) --- */
-        #truth-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 70;
-            background: #000; display: none; flex-direction: column; justify-content: center; align-items: center;
-            padding: 30px; text-align: center;
-        }
-        .truth-text { color: #ccc; font-family: sans-serif; font-size: 1rem; line-height: 1.5; }
-        .highlight { color: var(--neon-green); font-weight: bold; }
-        .signature { margin-top: 40px; font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 4px; color: var(--neon-cyan); opacity: 0.8; }
-        
-        .btn-reboot {
-            margin-top: 30px; background: #222; color: #fff; border: 1px solid #444;
-            padding: 12px 25px; font-size: 0.9rem;
-        }
-
-        @keyframes fadeIn { to { opacity: 1; } }
+        .btn-action { background: transparent; border: 1px solid #fff; color: #fff; padding: 15px 30px; margin-top: 10px; font-family: var(--font-display); font-size: 1rem; }
     </style>
 </head>
 <body>
 
     <div id="viewport">
-        <video class="input_video" playsinline></video>
+        <video class="input_video" playsinline webkit-playsinline></video>
         <canvas class="output_canvas" id="main-canvas"></canvas>
     </div>
     <div class="scanlines"></div>
 
-    <div id="hud-layer">
+    <div id="ui-container">
         
-        <div class="hud-top">
-            <div>
-                <h1>EXPOSURE</h1>
-                <div style="font-size:0.6rem; letter-spacing:2px; opacity:0.7;">MOBILE SURVEILLANCE V.9</div>
+        <div class="ui-top">
+            <div class="header-row">
+                <div>
+                    <h1>EXPOSURE</h1>
+                    <div style="font-size:0.6rem; opacity:0.7;">IOS SURVEILLANCE V.X</div>
+                </div>
+                <div class="badge" id="status-badge">INIT...</div>
             </div>
-            <div class="status-badge" id="sys-status">INIT...</div>
+
+            <div class="threat-box">
+                <div class="threat-label">THREAT LEVEL</div>
+                <div class="bar-bg"><div class="bar-fill" id="threat-bar"></div></div>
+            </div>
+
+            <div class="data-panel">FACE: <span id="face-val" style="color:#fff">SCANNING</span></div>
+            <div class="data-panel">HANDS: <span id="hand-val" style="color:#fff">SCANNING</span></div>
+            <div class="data-panel">GPS: <span id="gps-val">--.--, --.--</span></div>
         </div>
 
-        <div class="threat-container">
-            <div class="threat-label">THREAT</div>
-            <div class="threat-track"><div class="threat-fill" id="threat-fill"></div></div>
-        </div>
-
-        <div>
-            <div class="panel-data">FACE: <span id="face-state" style="color:#fff">SCAN...</span></div>
-            <div class="panel-data">HANDS: <span id="hand-state" style="color:#fff">SCAN...</span></div>
-            <div class="panel-data">LOC: <span id="mini-coords" style="font-size:0.65rem;">--.--, --.--</span></div>
-        </div>
-
-        <div class="hud-bottom">
-            <button id="forbidden-btn" onclick="initiateSequence()">
+        <div class="ui-bottom">
+            <button id="forbidden-btn" onclick="startSequence()">
                 DO NOT PRESS
-                <span class="btn-subtext">IF YOU DON'T WANT TO BE EXPOSED</span>
+                <span class="btn-small">IF YOU DON'T WANT TO BE EXPOSED</span>
             </button>
-            
-            <div class="sys-info-mobile">
-                <span id="info-os">OS DETECT</span> | <span id="info-time">00:00</span>
+            <div class="footer-info">
+                <span id="os-info">IOS KERNEL</span> // <span id="clock">00:00</span>
             </div>
         </div>
+
     </div>
 
     <div id="matrix-layer">
-        <canvas id="matrix-canvas"></canvas>
+        <canvas id="matrix-c"></canvas>
         <div id="system-msg">ACCESSING KERNEL...</div>
     </div>
 
-    <div id="result-layer">
-        <div class="result-title">SEARCH COMPLETED</div>
+    <div id="result-layer" style="display:none; display:flex;"> <h2 style="color:var(--neon-red); font-family:var(--font-display); font-size:2rem; margin-bottom:10px;">EXPOSED</h2>
+        <img id="captured-image" src="">
         
-        <img id="captured-image" src="" alt="Subject">
-        
-        <div class="result-data-group">
-            <span class="result-label">SUBJECT LOCATION</span>
-            <span class="result-val" id="res-loc-city">UNKNOWN</span>
-            <span class="result-val" id="res-loc-coords" style="font-size:0.9rem; color:var(--neon-cyan); margin-top:5px;">--.---, --.---</span>
+        <div class="res-text">
+            <span class="res-lbl">LOCATION</span>
+            <span class="res-big" id="final-loc">UNKNOWN</span>
         </div>
-        
-        <div class="result-data-group" style="display:flex; gap:20px; justify-content:center;">
-            <div>
-                <span class="result-label">DEVICE</span>
-                <span class="result-val" id="res-device" style="font-size:1rem;">--</span>
-            </div>
-            <div>
-                <span class="result-label">TIME</span>
-                <span class="result-val" id="res-time" style="font-size:1rem;">--</span>
-            </div>
+        <div class="res-text">
+            <span class="res-lbl">COORDINATES</span>
+            <span class="res-big" id="final-gps" style="font-size:0.9rem; color:var(--neon-cyan)">--</span>
         </div>
 
-        <button class="btn-reveal" onclick="showTruth()">REVEAL TRUTH</button>
+        <button class="btn-action" onclick="showTruth()">REVEAL TRUTH</button>
     </div>
 
-    <div id="truth-layer">
-        <h2 style="color:var(--neon-green); margin-bottom:20px; font-family:var(--font-display);">SIMULATION ENDED</h2>
-        <p class="truth-text">
-            Por suerte, <span class="highlight">todo esto es local</span>.
-            <br><br>
-            Tus datos biométricos y de ubicación nunca salieron de este teléfono.
-            <br><br>
-            Esta demostración existe para mostrarte lo fácil que es para una web acceder a tu perfil en tiempo real si das los permisos equivocados.
+    <div id="truth-layer" style="display:none; display:flex;">
+        <h2 style="color:var(--neon-green); margin-bottom:20px;">SIMULATION ENDED</h2>
+        <p style="color:#ccc; line-height:1.5;">
+            Por suerte, <b>todo esto es local</b>.<br><br>
+            Tus datos no han salido de tu iPhone. Esta demo muestra lo fácil que es obtener tu perfil en tiempo real si aceptas los permisos equivocados.
         </p>
-        <div class="signature">DomiStudios</div>
-        <button class="btn-reboot" onclick="location.reload()">REBOOT SYSTEM</button>
+        <div style="margin-top:30px; font-family:var(--font-display); font-size:1.5rem; color:var(--neon-cyan);">DomiStudios</div>
+        <button class="btn-action" style="background:#222; border:none; margin-top:30px;" onclick="location.reload()">REBOOT</button>
     </div>
 
     <script>
-        // --- CONFIG ---
-        const config = { colors: { safe: '#00f3ff', warn: '#ffbd00', danger: '#ff003c' } };
-        const state = { city: "UNKNOWN", country: "", lat: "00.00", lon: "00.00", isTracking: true, lastNose: {x:0, y:0}, threatLevel: 0 };
+        // CONFIG
+        const state = { city: "UNKNOWN", lat: "00.00", lon: "00.00", tracking: true, threat: 0, lastNose: {x:0, y:0} };
 
-        // --- AUDIO ---
+        // AUDIO
         const AudioSys = {
             ctx: null,
             init: () => { AudioSys.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-            play: (freq, type, duration, vol=0.1) => {
+            play: (freq, type, dur) => {
                 if(!AudioSys.ctx) AudioSys.init();
-                const osc = AudioSys.ctx.createOscillator();
-                const gain = AudioSys.ctx.createGain();
-                osc.type = type; osc.frequency.setValueAtTime(freq, AudioSys.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, AudioSys.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, AudioSys.ctx.currentTime + duration);
-                osc.connect(gain); gain.connect(AudioSys.ctx.destination);
-                osc.start(); osc.stop(AudioSys.ctx.currentTime + duration);
+                const o = AudioSys.ctx.createOscillator();
+                const g = AudioSys.ctx.createGain();
+                o.type = type; o.frequency.value = freq;
+                g.gain.value = 0.1; g.gain.exponentialRampToValueAtTime(0.01, AudioSys.ctx.currentTime + dur);
+                o.connect(g); g.connect(AudioSys.ctx.destination);
+                o.start(); o.stop(AudioSys.ctx.currentTime + dur);
             },
-            glitch: () => {
-                AudioSys.play(50, 'sawtooth', 0.5, 0.5);
-                setTimeout(() => AudioSys.play(1000, 'square', 0.1, 0.2), 100);
-            }
+            glitch: () => { AudioSys.play(50, 'sawtooth', 0.5); setTimeout(()=>AudioSys.play(800,'square',0.1),100); }
         };
 
-        // --- DATA & GEO ---
-        function gatherData() {
-            const ua = navigator.userAgent;
-            let os = "UNKNOWN";
-            if (/Android/i.test(ua)) os = "ANDROID OS";
-            else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS KERNEL";
-            else if (/Windows/i.test(ua)) os = "WINDOWS";
-            else if (/Mac/i.test(ua)) os = "MACOS";
+        // UI & GEO
+        function initUI() {
+            // Reloj
+            setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 1000);
             
-            document.getElementById('info-os').innerText = os;
-            document.getElementById('res-device').innerText = os;
-
-            setInterval(() => {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-                document.getElementById('info-time').innerText = timeStr;
-            }, 1000);
-        }
-
-        function initGeo() {
-            if ("geolocation" in navigator) {
+            // Geo
+            if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     state.lat = pos.coords.latitude.toFixed(4);
                     state.lon = pos.coords.longitude.toFixed(4);
-                    document.getElementById('mini-coords').innerText = `${state.lat}, ${state.lon}`;
-                    
+                    document.getElementById('gps-val').innerText = `${state.lat}, ${state.lon}`;
                     try {
-                        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${state.lat}&lon=${state.lon}`);
-                        const data = await resp.json();
-                        if(data.address) {
-                            state.city = data.address.city || data.address.town || data.address.village || "Unknown";
-                            state.country = data.address.country || "";
-                        }
-                    } catch(e) {}
-                }, () => { state.city = "DENIED"; });
+                        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${state.lat}&lon=${state.lon}`);
+                        const d = await r.json();
+                        if(d.address) state.city = (d.address.city || d.address.town || d.address.village || "UNKNOWN").toUpperCase();
+                    } catch(e){}
+                });
             }
         }
 
-        // --- MEDIAPIPE & CANVAS ---
-        const videoElement = document.querySelector('.input_video');
-        const canvasElement = document.getElementById('main-canvas');
-        const canvasCtx = canvasElement.getContext('2d');
+        // VISION ENGINE
+        const video = document.querySelector('.input_video');
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
 
         function onResults(results) {
-            canvasElement.width = window.innerWidth;
-            canvasElement.height = window.innerHeight;
-
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            // Ajuste forzado al tamaño de la ventana
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
             
-            // Cálculo de "cover" para el video
-            const vidW = videoElement.videoWidth;
-            const vidH = videoElement.videoHeight;
-            const screenW = canvasElement.width;
-            const screenH = canvasElement.height;
-            const scale = Math.max(screenW / vidW, screenH / vidH);
-            const xOffset = (screenW - (vidW * scale)) / 2;
-            const yOffset = (screenH - (vidH * scale)) / 2;
-
-            canvasCtx.drawImage(results.image, xOffset, yOffset, vidW * scale, vidH * scale);
+            ctx.save();
+            ctx.clearRect(0,0,canvas.width,canvas.height);
             
-            canvasCtx.fillStyle = "rgba(0, 10, 15, 0.3)";
-            canvasCtx.fillRect(0, 0, screenW, screenH);
+            // Dibujar video "cover" (llenar pantalla)
+            const vW = video.videoWidth, vH = video.videoHeight;
+            const sW = canvas.width, sH = canvas.height;
+            const scale = Math.max(sW/vW, sH/vH);
+            const x = (sW - (vW*scale))/2, y = (sH - (vH*scale))/2;
+            ctx.drawImage(results.image, x, y, vW*scale, vH*scale);
+            
+            // Filtro oscuro
+            ctx.fillStyle = "rgba(0,10,15,0.4)";
+            ctx.fillRect(0,0,sW,sH);
 
-            if (state.isTracking) {
-                // Hands
-                if (results.leftHandLandmarks || results.rightHandLandmarks) {
-                    document.getElementById('hand-state').innerText = "LOCK";
-                    document.getElementById('hand-state').style.color = config.colors.safe;
-                    drawHand(results.leftHandLandmarks);
-                    drawHand(results.rightHandLandmarks);
+            if(state.tracking) {
+                // Manos
+                if(results.leftHandLandmarks || results.rightHandLandmarks) {
+                    document.getElementById('hand-val').innerText = "LOCKED";
+                    document.getElementById('hand-val').style.color = "#00f3ff";
+                    drawH(results.leftHandLandmarks); drawH(results.rightHandLandmarks);
                 } else {
-                    document.getElementById('hand-state').innerText = "SCAN";
-                    document.getElementById('hand-state').style.color = "#fff";
+                    document.getElementById('hand-val').innerText = "SCANNING";
+                    document.getElementById('hand-val').style.color = "#fff";
                 }
-
-                // Face
-                if (results.faceLandmarks) {
-                    document.getElementById('face-state').innerText = "ID OK";
-                    document.getElementById('face-state').style.color = config.colors.safe;
-                    drawConnectors(canvasCtx, results.faceLandmarks, FACEMESH_FACE_OVAL, {color: 'rgba(0, 243, 255, 0.4)', lineWidth: 1});
-                    
-                    const nose = results.faceLandmarks[1];
-                    updateThreat(nose);
+                
+                // Cara
+                if(results.faceLandmarks) {
+                    document.getElementById('face-val').innerText = "ID VERIFIED";
+                    document.getElementById('face-val').style.color = "#00f3ff";
+                    drawConnectors(ctx, results.faceLandmarks, FACEMESH_FACE_OVAL, {color:'rgba(0,243,255,0.5)', lineWidth:1});
+                    calcThreat(results.faceLandmarks[1]);
                 } else {
-                    document.getElementById('face-state').innerText = "SCAN";
-                    document.getElementById('face-state').style.color = "#fff";
-                    updateThreat(null);
+                    document.getElementById('face-val').innerText = "SCANNING";
+                    document.getElementById('face-val').style.color = "#fff";
+                    calcThreat(null);
                 }
             }
-            canvasCtx.restore();
+            ctx.restore();
         }
 
-        function drawHand(landmarks) {
-            if(!landmarks) return;
-            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: 'rgba(0, 243, 255, 0.2)', lineWidth: 2});
-            drawLandmarks(canvasCtx, landmarks, {color: config.colors.safe, lineWidth: 1, radius: 2});
+        function drawH(l) {
+            if(!l) return;
+            drawConnectors(ctx, l, HAND_CONNECTIONS, {color:'rgba(0,243,255,0.3)', lineWidth:2});
+            drawLandmarks(ctx, l, {color:'#00f3ff', lineWidth:1, radius:2});
         }
 
-        function updateThreat(nose) {
-            let movement = 0;
+        function calcThreat(nose) {
+            let move = 0;
             if(nose) {
-                const delta = Math.sqrt(Math.pow(nose.x - state.lastNose.x, 2) + Math.pow(nose.y - state.lastNose.y, 2));
-                movement = delta * 200;
+                let d = Math.sqrt(Math.pow(nose.x - state.lastNose.x, 2) + Math.pow(nose.y - state.lastNose.y, 2));
+                move = d * 100;
                 state.lastNose = {x: nose.x, y: nose.y};
             }
-            if(movement > 1.5) state.threatLevel += 3; else state.threatLevel -= 1;
-            if(state.threatLevel < 0) state.threatLevel = 0; if(state.threatLevel > 100) state.threatLevel = 100;
-
-            const bar = document.getElementById('threat-fill');
-            bar.style.width = state.threatLevel + "%";
-            bar.style.backgroundColor = state.threatLevel > 60 ? config.colors.danger : (state.threatLevel > 30 ? config.colors.warn : config.colors.safe);
+            if(move > 0.5) state.threat += 2; else state.threat -= 1;
+            if(state.threat < 0) state.threat = 0; if(state.threat > 100) state.threat = 100;
+            document.getElementById('threat-bar').style.width = state.threat + "%";
         }
 
-        // --- SEQUENCES ---
-        const matrixCanvas = document.getElementById('matrix-canvas');
-        const mCtx = matrixCanvas.getContext('2d');
-        let matrixInterval;
-
-        function runMatrix() {
-            matrixCanvas.width = window.innerWidth;
-            matrixCanvas.height = window.innerHeight;
-            const chars = "010101XYZ$#@";
-            const fontSize = 14;
-            const columns = matrixCanvas.width / fontSize;
-            const drops = [];
-            for(let x=0; x<columns; x++) drops[x] = 1;
-
-            matrixInterval = setInterval(() => {
-                mCtx.fillStyle = "rgba(0, 0, 0, 0.05)";
-                mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
-                mCtx.fillStyle = "#0aff0a";
-                mCtx.font = fontSize + "px monospace";
-                for(let i=0; i<drops.length; i++) {
-                    const text = chars.charAt(Math.floor(Math.random() * chars.length));
-                    mCtx.fillText(text, i*fontSize, drops[i]*fontSize);
-                    if(drops[i]*fontSize > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
-                    drops[i]++;
-                }
-            }, 33);
-        }
-
-        function initiateSequence() {
+        // SEQUENCIA
+        let mInt;
+        function startSequence() {
             AudioSys.init();
             AudioSys.play(200, 'triangle', 0.2);
-            document.getElementById('hud-layer').style.opacity = '0';
-            setTimeout(() => document.getElementById('hud-layer').style.display = 'none', 500);
+            document.getElementById('ui-container').style.display = 'none'; // Ocultar UI normal
             
-            document.getElementById('matrix-layer').style.display = 'block';
-            runMatrix();
+            const mLayer = document.getElementById('matrix-layer');
+            mLayer.style.display = 'block';
+            
+            // Matrix Effect
+            const mc = document.getElementById('matrix-c');
+            const mctx = mc.getContext('2d');
+            mc.width = window.innerWidth; mc.height = window.innerHeight;
+            const cols = Math.floor(mc.width/14);
+            const drops = Array(cols).fill(1);
+            
+            mInt = setInterval(() => {
+                mctx.fillStyle = "rgba(0,0,0,0.1)"; mctx.fillRect(0,0,mc.width,mc.height);
+                mctx.fillStyle = "#0f0"; mctx.font = "14px monospace";
+                drops.forEach((y, i) => {
+                    mctx.fillText(String.fromCharCode(0x30A0 + Math.random()*96), i*14, y*14);
+                    if(y*14 > mc.height && Math.random()>0.975) drops[i]=0;
+                    drops[i]++;
+                });
+            }, 50);
 
-            const msgEl = document.getElementById('system-msg');
-            const msgs = ["ACCESSING DATA...", "ANALYZING FACE...", "TRIANGULATING GPS...", "MATCH FOUND."];
-            let step = 0;
-            const seq = setInterval(() => {
-                if(step < msgs.length) {
-                    msgEl.innerText = msgs[step];
-                    AudioSys.play(400 + (step*100), 'square', 0.05);
-                    step++;
+            // Mensajes
+            const msgs = ["BYPASSING FIREWALL...", "ACCESSING CAMERA...", "GPS TRIANGULATION...", "TARGET CONFIRMED."];
+            let i = 0;
+            const tInt = setInterval(() => {
+                if(i < msgs.length) {
+                    document.getElementById('system-msg').innerText = msgs[i];
+                    AudioSys.play(300 + (i*100), 'square', 0.1);
+                    i++;
                 } else {
-                    clearInterval(seq);
-                    finalCapture();
+                    clearInterval(tInt);
+                    showResult();
                 }
             }, 1000);
         }
 
-        function finalCapture() {
+        function showResult() {
+            clearInterval(mInt);
             AudioSys.glitch();
-            const dataUrl = canvasElement.toDataURL('image/png');
-            document.getElementById('captured-image').src = dataUrl;
-
-            clearInterval(matrixInterval);
+            
+            const url = canvas.toDataURL('image/png');
+            document.getElementById('captured-image').src = url;
+            
             document.getElementById('matrix-layer').style.display = 'none';
-            document.getElementById('result-layer').style.display = 'flex';
-
-            document.getElementById('res-loc-city').innerText = `${state.city.toUpperCase()}, ${state.country.toUpperCase()}`;
-            document.getElementById('res-loc-coords').innerText = `${state.lat} / ${state.lon}`;
-            document.getElementById('res-time').innerText = new Date().toLocaleTimeString();
+            
+            const res = document.getElementById('result-layer');
+            res.style.display = 'flex'; // Forzar display flex para centrar
+            
+            document.getElementById('final-loc').innerText = state.city;
+            document.getElementById('final-gps').innerText = `${state.lat}, ${state.lon}`;
         }
 
         function showTruth() {
@@ -514,21 +381,20 @@
             document.getElementById('truth-layer').style.display = 'flex';
         }
 
-        // --- INIT ---
-        gatherData();
-        initGeo();
+        // INIT
+        initUI();
+        document.getElementById('result-layer').style.display = 'none'; // Asegurar oculto al inicio
+        document.getElementById('truth-layer').style.display = 'none';
 
         const holistic = new Holistic({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`});
-        holistic.setOptions({ modelComplexity: 0, smoothLandmarks: true, enableSegmentation: false, refineFaceLandmarks: false });
+        holistic.setOptions({modelComplexity: 0, smoothLandmarks: true, enableSegmentation: false, refineFaceLandmarks: false});
         holistic.onResults(onResults);
 
-        const camera = new Camera(videoElement, {
-            onFrame: async () => { await holistic.send({image: videoElement}); },
+        const cam = new Camera(video, {
+            onFrame: async () => { await holistic.send({image: video}); },
             width: 1280, height: 720
         });
-        camera.start().then(() => {
-            document.getElementById('sys-status').innerText = "ONLINE";
-        });
+        cam.start().then(()=> document.getElementById('status-badge').innerText="ONLINE");
 
     </script>
 </body>
