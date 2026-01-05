@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROJECT: EXPOSURE // SURVEILLANCE V.X</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PROJECT: EXPOSURE // MOBILE OPTIMIZED</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,123 +20,143 @@
             --neon-cyan: #00f3ff;
             --neon-green: #0aff0a;
             --neon-yellow: #ffbd00;
-            --bg-color: #050505;
-            --glass: rgba(10, 20, 30, 0.85);
-            --border: 1px solid rgba(0, 243, 255, 0.2);
+            --glass: rgba(5, 10, 15, 0.75);
+            --border: 1px solid rgba(0, 243, 255, 0.3);
             --font-display: 'Rajdhani', sans-serif;
             --font-code: 'JetBrains Mono', monospace;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg-color);
+            background-color: #000;
             color: var(--neon-cyan);
             font-family: var(--font-code);
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            /* Fix para móviles para evitar scroll elástico */
+            position: fixed; 
         }
 
-        /* --- VIDEO & CANVAS LAYERS --- */
+        /* --- CÁMARA Y CANVAS --- */
         #viewport {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; background: #000;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #000;
         }
         .input_video { display: none; }
+        
+        /* Ajuste crítico para móvil: cover para llenar pantalla */
         .output_canvas {
             width: 100%; height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Mirror */
+            transform: scaleX(-1);
         }
 
-        /* Scanline Overlay */
         .scanlines {
             position: absolute; top:0; left:0; width:100%; height:100%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.5));
-            background-size: 100% 4px; pointer-events: none; z-index: 5;
-            opacity: 0.6;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 3px; pointer-events: none; z-index: 5; opacity: 0.5;
         }
 
-        /* --- HUD UI LAYOUT --- */
+        /* --- INTERFAZ HUD (GRID ADAPTATIVO) --- */
         #hud-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
-            padding: 2vh 2vw;
-            display: grid;
-            grid-template-columns: 320px 1fr 320px;
-            grid-template-rows: 80px 1fr 120px;
-            gap: 15px;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-
-        .panel {
-            background: var(--glass);
-            backdrop-filter: blur(8px);
-            border: var(--border);
             padding: 15px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column;
-            pointer-events: auto;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
         }
-        /* Corners decoration */
-        .panel::before { content: ''; position: absolute; top: 0; left: 0; width: 15px; height: 15px; border-top: 2px solid var(--neon-cyan); border-left: 2px solid var(--neon-cyan); }
-        .panel::after { content: ''; position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; border-bottom: 2px solid var(--neon-cyan); border-right: 2px solid var(--neon-cyan); }
 
-        /* Areas */
-        .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--neon-cyan); background: transparent; backdrop-filter: none; box-shadow: none; border: none; }
-        .side-left { grid-row: 2; gap: 20px; }
-        .side-right { grid-row: 2; grid-column: 3; text-align: right; gap: 20px; }
-        .footer { grid-column: 1 / -1; grid-row: 3; display: flex; justify-content: center; align-items: center; background: transparent; border: none; box-shadow: none; backdrop-filter: none;}
+        /* Header Compacto */
+        .hud-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding-bottom: 20px;
+        }
 
-        /* Typography */
-        h1 { font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 4px; color: #fff; text-shadow: 0 0 10px var(--neon-cyan); text-transform: uppercase; }
-        h3 { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .data-val { font-size: 1rem; color: var(--neon-cyan); font-weight: bold; }
-        .data-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; color: #aaa; }
+        /* Paneles de datos flotantes */
+        .panel-data {
+            font-size: 0.75rem; 
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            padding: 8px;
+            border-left: 2px solid var(--neon-cyan);
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 1.4rem; 
+            letter-spacing: 2px; 
+            color: #fff; 
+            text-shadow: 0 0 10px var(--neon-cyan);
+            line-height: 1;
+        }
         
-        /* Threat Bar */
-        #threat-container { margin-top: 10px; }
-        #threat-label { font-size: 1.5rem; font-family: var(--font-display); font-weight: 900; }
-        .threat-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.1); margin-top: 5px; }
-        #threat-fill { width: 0%; height: 100%; background: var(--neon-cyan); transition: width 0.2s, background-color 0.2s; }
+        .status-badge {
+            font-size: 0.7rem; color: var(--neon-yellow); border: 1px solid var(--neon-yellow);
+            padding: 2px 5px; border-radius: 2px; letter-spacing: 1px;
+        }
 
-        /* The Button */
+        /* Barra de Amenaza (Threat) */
+        .threat-container {
+            position: absolute;
+            top: 70px; left: 15px; right: 15px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .threat-label { font-family: var(--font-display); font-size: 1rem; color: #fff; width: 70px; }
+        .threat-track { flex-grow: 1; height: 6px; background: rgba(255,255,255,0.2); position: relative; }
+        .threat-fill { height: 100%; width: 0%; background: var(--neon-cyan); transition: width 0.2s, background-color 0.2s; box-shadow: 0 0 10px var(--neon-cyan); }
+
+        /* Footer y Botón Principal */
+        .hud-bottom {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            padding-top: 20px;
+            pointer-events: auto; /* Permitir clicks */
+        }
+
         #forbidden-btn {
-            background: rgba(255, 0, 60, 0.05);
+            background: rgba(255, 0, 60, 0.15);
             border: 2px solid var(--neon-red);
             color: var(--neon-red);
-            padding: 20px 50px;
+            padding: 18px 20px;
+            width: 100%;
+            max-width: 400px;
             font-family: var(--font-display);
-            font-size: 1.2rem;
-            letter-spacing: 3px;
-            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 2px;
             text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.3);
             transition: all 0.2s;
-            box-shadow: 0 0 20px rgba(255, 0, 60, 0.2);
-            pointer-events: auto;
-            position: relative;
-            overflow: hidden;
+            text-align: center;
         }
-        #forbidden-btn:hover { background: var(--neon-red); color: #000; box-shadow: 0 0 50px var(--neon-red); }
-        #forbidden-btn:active { transform: scale(0.98); }
+        #forbidden-btn:active { background: var(--neon-red); color: #000; transform: scale(0.98); }
+        .btn-subtext { display: block; font-size: 0.7rem; font-weight: 400; opacity: 0.8; margin-top: 5px; font-family: var(--font-code); }
+
+        /* Información del sistema (versión móvil reducida) */
+        .sys-info-mobile {
+            display: flex; gap: 10px; font-size: 0.65rem; color: #888;
+            margin-bottom: 10px;
+        }
 
         /* --- MATRIX MODE --- */
         #matrix-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 50; display: none;
         }
-        #matrix-canvas { width: 100%; height: 100%; }
         #system-msg {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--neon-green); font-size: 2rem; font-family: var(--font-code);
+            width: 90%;
+            color: var(--neon-green); font-size: 1.5rem; font-family: var(--font-code);
             text-shadow: 0 0 10px var(--neon-green);
             background: rgba(0,0,0,0.9); padding: 20px; border: 1px solid var(--neon-green);
             text-align: center;
         }
 
-        /* --- EXPOSED RESULT LAYER --- */
+        /* --- RESULTADOS --- */
         #result-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 60;
             background: rgba(5, 5, 5, 0.98);
@@ -144,118 +164,85 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 20px;
-            opacity: 0;
-            animation: fadeIn 0.5s forwards;
-        }
-
-        #result-content {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
+            gap: 15px;
+            padding: 20px;
+            opacity: 0; animation: fadeIn 0.5s forwards;
+            overflow-y: auto; /* Permitir scroll si la pantalla es muy pequeña */
         }
 
         #captured-image {
-            width: 400px;
+            width: 80vw; /* Ancho relativo al móvil */
+            max-width: 400px;
             border: 2px solid var(--neon-red);
-            box-shadow: 0 0 40px var(--neon-red);
-            filter: grayscale(100%) contrast(1.2) brightness(1.1);
+            box-shadow: 0 0 30px var(--neon-red);
+            filter: grayscale(100%) contrast(1.2);
+            margin-bottom: 10px;
         }
 
-        .result-data-panel {
-            text-align: left;
-            font-family: var(--font-code);
-        }
-        
-        .result-title { font-size: 3rem; color: var(--neon-red); font-family: var(--font-display); text-shadow: 0 0 20px var(--neon-red); margin-bottom: 10px; text-transform: uppercase;}
-        .result-label { color: #666; font-size: 0.9rem; margin-top: 10px; display: block; }
-        .result-val { color: #fff; font-size: 1.4rem; display: block; text-shadow: 0 0 5px #fff; }
+        .result-title { font-size: 2rem; color: var(--neon-red); font-family: var(--font-display); text-shadow: 0 0 15px var(--neon-red); text-align: center; margin-bottom: 10px; }
+        .result-data-group { text-align: center; margin-bottom: 10px; }
+        .result-label { color: #666; font-size: 0.8rem; display: block; letter-spacing: 2px; margin-bottom: 2px; }
+        .result-val { color: #fff; font-size: 1.2rem; display: block; text-shadow: 0 0 5px #fff; font-weight: bold;}
 
         .btn-reveal {
-            margin-top: 40px;
             background: transparent; border: 1px solid #fff; color: #fff;
-            padding: 15px 40px; cursor: pointer; font-family: var(--font-display); letter-spacing: 2px;
-            transition: 0.3s;
+            padding: 15px 30px; cursor: pointer; font-family: var(--font-display); letter-spacing: 2px;
+            font-size: 1rem; margin-top: 10px; width: 80%; max-width: 300px;
         }
-        .btn-reveal:hover { background: #fff; color: #000; }
 
-        /* --- TRUTH LAYER --- */
+        /* --- VERDAD (TRUTH LAYER) --- */
         #truth-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 70;
             background: #000; display: none; flex-direction: column; justify-content: center; align-items: center;
-            padding: 40px; text-align: center;
+            padding: 30px; text-align: center;
         }
-        .truth-text { color: #ddd; font-family: sans-serif; font-size: 1.1rem; line-height: 1.6; max-width: 600px; }
+        .truth-text { color: #ccc; font-family: sans-serif; font-size: 1rem; line-height: 1.5; }
         .highlight { color: var(--neon-green); font-weight: bold; }
-        .signature { margin-top: 50px; font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 4px; color: var(--neon-cyan); opacity: 0.8; }
-
-        /* Animations */
-        @keyframes fadeIn { to { opacity: 1; } }
-        @keyframes pulseRed { 0% { box-shadow: 0 0 10px var(--neon-red); } 50% { box-shadow: 0 0 30px var(--neon-red); } 100% { box-shadow: 0 0 10px var(--neon-red); } }
-
-        /* Mobile adjustments */
-        @media (max-width: 800px) {
-            #hud-layer { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
-            .side-left, .side-right { display: none; }
-            #captured-image { width: 90vw; }
-            #result-content { flex-direction: column; gap: 20px; }
-            .result-data-panel { text-align: center; }
+        .signature { margin-top: 40px; font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 4px; color: var(--neon-cyan); opacity: 0.8; }
+        
+        .btn-reboot {
+            margin-top: 30px; background: #222; color: #fff; border: 1px solid #444;
+            padding: 12px 25px; font-size: 0.9rem;
         }
+
+        @keyframes fadeIn { to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div id="viewport">
-        <video class="input_video"></video>
+        <video class="input_video" playsinline></video>
         <canvas class="output_canvas" id="main-canvas"></canvas>
     </div>
     <div class="scanlines"></div>
 
     <div id="hud-layer">
-        <div class="header">
+        <div class="hud-top">
             <div>
-                <h1>EXPOSURE_PROJECT</h1>
-                <div style="font-size:0.7rem; color:#666; letter-spacing:2px;">SURVEILLANCE GRID V.9.0</div>
+                <h1>EXPOSURE</h1>
+                <div style="font-size:0.6rem; letter-spacing:2px; opacity:0.7;">MOBILE SURVEILLANCE V.9</div>
             </div>
-            <div style="text-align:right;">
-                <h3>STATUS</h3>
-                <span class="data-val" id="sys-status" style="color:var(--neon-yellow)">INITIALIZING...</span>
-            </div>
+            <div class="status-badge" id="sys-status">INIT...</div>
         </div>
 
-        <div class="panel side-left">
-            <h3>BIOMETRIC TRACKING</h3>
-            <div class="data-row"><span>FACE ID:</span> <span id="face-state" style="color:#fff">SEARCHING</span></div>
-            <div class="data-row"><span>HANDS:</span> <span id="hand-state" style="color:#fff">SEARCHING</span></div>
-            <div class="data-row"><span>EYES:</span> <span style="color:#444">DISABLED</span></div>
-            
-            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
-                <h3>THREAT ANALYSIS</h3>
-                <div id="threat-label" style="color:var(--neon-cyan)">SAFE</div>
-                <div class="threat-bar-bg"><div id="threat-fill"></div></div>
-            </div>
+        <div class="threat-container">
+            <div class="threat-label">THREAT</div>
+            <div class="threat-track"><div class="threat-fill" id="threat-fill"></div></div>
         </div>
 
-        <div class="panel side-right">
-            <h3>DEVICE FINGERPRINT</h3>
-            <div class="data-row"><span>OS:</span> <span id="info-os" style="color:#fff">--</span></div>
-            <div class="data-row"><span>BROWSER:</span> <span id="info-browser" style="color:#fff">--</span></div>
-            <div class="data-row"><span>CPU CORES:</span> <span id="info-cpu" style="color:#fff">--</span></div>
-            <div class="data-row"><span>MEMORY:</span> <span id="info-ram" style="color:#fff">--</span></div>
-            <div class="data-row"><span>RES:</span> <span id="info-res" style="color:#fff">--</span></div>
-            
-            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
-                <h3>LOCAL TIME</h3>
-                <div id="info-time" class="data-val">--:--:--</div>
-            </div>
+        <div style="position: absolute; top: 110px; left: 15px;">
+            <div class="panel-data">FACE: <span id="face-state" style="color:#fff">SCAN...</span></div>
+            <div class="panel-data">HANDS: <span id="hand-state" style="color:#fff">SCAN...</span></div>
+            <div class="panel-data">LOC: <span id="mini-coords" style="font-size:0.65rem;">--.--, --.--</span></div>
         </div>
 
-        <div class="footer">
+        <div class="hud-bottom">
+            <div class="sys-info-mobile">
+                <span id="info-os">OS DETECT</span> | <span id="info-time">00:00</span>
+            </div>
             <button id="forbidden-btn" onclick="initiateSequence()">
-                DO NOT PRESS THIS BUTTON<br>
-                <span style="font-size:0.7rem; opacity:0.7;">IF YOU DON'T WANT TO BE EXPOSED</span>
+                DO NOT PRESS
+                <span class="btn-subtext">IF YOU DON'T WANT TO BE EXPOSED</span>
             </button>
         </div>
     </div>
@@ -268,19 +255,22 @@
     <div id="result-layer">
         <div class="result-title">SEARCH COMPLETED</div>
         
-        <div id="result-content">
-            <img id="captured-image" src="" alt="Subject Identified">
-            
-            <div class="result-data-panel">
-                <span class="result-label">SUBJECT LOCATION</span>
-                <span class="result-val" id="res-loc-city">UNKNOWN</span>
-                <span class="result-val" id="res-loc-coords" style="font-size:1rem; color:var(--neon-cyan);">--.---, --.---</span>
-                
-                <span class="result-label">DEVICE ID</span>
-                <span class="result-val" id="res-device">--</span>
-                
-                <span class="result-label">TIMESTAMP</span>
-                <span class="result-val" id="res-time">--</span>
+        <img id="captured-image" src="" alt="Subject">
+        
+        <div class="result-data-group">
+            <span class="result-label">SUBJECT LOCATION</span>
+            <span class="result-val" id="res-loc-city">UNKNOWN</span>
+            <span class="result-val" id="res-loc-coords" style="font-size:0.9rem; color:var(--neon-cyan); margin-top:5px;">--.---, --.---</span>
+        </div>
+        
+        <div class="result-data-group" style="display:flex; gap:20px; justify-content:center;">
+            <div>
+                <span class="result-label">DEVICE</span>
+                <span class="result-val" id="res-device" style="font-size:1rem;">--</span>
+            </div>
+            <div>
+                <span class="result-label">TIME</span>
+                <span class="result-val" id="res-time" style="font-size:1rem;">--</span>
             </div>
         </div>
 
@@ -290,56 +280,34 @@
     <div id="truth-layer">
         <h2 style="color:var(--neon-green); margin-bottom:20px; font-family:var(--font-display);">SIMULATION ENDED</h2>
         <p class="truth-text">
-            Fortunately, <span class="highlight">this is entirely local</span>.
+            Por suerte, <span class="highlight">todo esto es local</span>.
             <br><br>
-            Your biometrics and location data never left your device. 
-            This demonstration exists to show how easily modern web permissions 
-            can be used to profile users in real-time.
+            Tus datos biométricos y de ubicación nunca salieron de este teléfono.
             <br><br>
-            Always check what permissions you grant.
+            Esta demostración existe para mostrarte lo fácil que es para una web acceder a tu perfil en tiempo real si das los permisos equivocados.
         </p>
         <div class="signature">DomiStudios</div>
-        <button onclick="location.reload()" style="margin-top:40px; background:#333; color:#fff; border:none; padding:10px 20px; cursor:pointer;">REBOOT SYSTEM</button>
+        <button class="btn-reboot" onclick="location.reload()">REBOOT SYSTEM</button>
     </div>
 
     <script>
-        // --- 1. SYSTEM CONFIGURATION ---
-        const config = {
-            colors: {
-                safe: '#00f3ff',
-                warn: '#ffbd00',
-                danger: '#ff003c'
-            }
-        };
+        // --- CONFIG ---
+        const config = { colors: { safe: '#00f3ff', warn: '#ffbd00', danger: '#ff003c' } };
+        const state = { city: "UNKNOWN", country: "", lat: "00.00", lon: "00.00", isTracking: true, lastNose: {x:0, y:0}, threatLevel: 0 };
 
-        const state = {
-            city: "UNKNOWN SECTOR",
-            country: "UNKNOWN REGION",
-            lat: "00.0000",
-            lon: "00.0000",
-            isTracking: true,
-            lastNose: {x:0, y:0},
-            threatLevel: 0
-        };
-
-        // --- 2. AUDIO ENGINE ---
+        // --- AUDIO ---
         const AudioSys = {
             ctx: null,
-            init: () => {
-                AudioSys.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            },
+            init: () => { AudioSys.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
             play: (freq, type, duration, vol=0.1) => {
                 if(!AudioSys.ctx) AudioSys.init();
                 const osc = AudioSys.ctx.createOscillator();
                 const gain = AudioSys.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, AudioSys.ctx.currentTime);
+                osc.type = type; osc.frequency.setValueAtTime(freq, AudioSys.ctx.currentTime);
                 gain.gain.setValueAtTime(vol, AudioSys.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, AudioSys.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(AudioSys.ctx.destination);
-                osc.start();
-                osc.stop(AudioSys.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(AudioSys.ctx.destination);
+                osc.start(); osc.stop(AudioSys.ctx.currentTime + duration);
             },
             glitch: () => {
                 AudioSys.play(50, 'sawtooth', 0.5, 0.5);
@@ -347,116 +315,102 @@
             }
         };
 
-        // --- 3. DATA HARVESTING (Browser & Geo) ---
-        function gatherSystemData() {
-            // OS & Browser
+        // --- DATA & GEO ---
+        function gatherData() {
+            // Simple OS detection for mobile
             const ua = navigator.userAgent;
-            let os = "Unknown OS";
-            if (ua.indexOf("Win") != -1) os = "Windows NT";
-            if (ua.indexOf("Mac") != -1) os = "MacOS";
-            if (ua.indexOf("Linux") != -1) os = "Linux Kernel";
-            if (ua.indexOf("Android") != -1) os = "Android";
-            if (ua.indexOf("iPhone") != -1) os = "iOS";
-
-            let browser = "Unknown Browser";
-            if(ua.indexOf("Chrome") != -1) browser = "Chrome / Blink";
-            if(ua.indexOf("Firefox") != -1) browser = "Firefox / Gecko";
-            if(ua.indexOf("Safari") != -1 && ua.indexOf("Chrome") == -1) browser = "Safari / WebKit";
-
-            // Hardware
-            const cores = navigator.hardwareConcurrency || "Unknown";
-            const ram = navigator.deviceMemory ? `~${navigator.deviceMemory} GB` : "Unknown";
-            const res = `${window.screen.width}x${window.screen.height}`;
-
-            // Populate DOM
+            let os = "UNKNOWN";
+            if (/Android/i.test(ua)) os = "ANDROID OS";
+            else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS KERNEL";
+            else if (/Windows/i.test(ua)) os = "WINDOWS";
+            else if (/Mac/i.test(ua)) os = "MACOS";
+            
             document.getElementById('info-os').innerText = os;
-            document.getElementById('info-browser').innerText = browser;
-            document.getElementById('info-cpu').innerText = cores;
-            document.getElementById('info-ram').innerText = ram;
-            document.getElementById('info-res').innerText = res;
+            document.getElementById('res-device').innerText = os;
 
-            // Live Time
             setInterval(() => {
                 const now = new Date();
-                document.getElementById('info-time').innerText = now.toLocaleTimeString();
+                const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                document.getElementById('info-time').innerText = timeStr;
             }, 1000);
         }
 
-        function initGeolocation() {
+        function initGeo() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     state.lat = pos.coords.latitude.toFixed(4);
                     state.lon = pos.coords.longitude.toFixed(4);
+                    document.getElementById('mini-coords').innerText = `${state.lat}, ${state.lon}`;
                     
-                    // Attempt Reverse Geocoding
                     try {
-                        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${state.lat}&lon=${state.lon}`;
-                        const resp = await fetch(url);
+                        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${state.lat}&lon=${state.lon}`);
                         const data = await resp.json();
                         if(data.address) {
-                            state.city = data.address.city || data.address.town || data.address.village || "Unknown City";
-                            state.country = data.address.country || "Unknown Country";
+                            state.city = data.address.city || data.address.town || data.address.village || "Unknown";
+                            state.country = data.address.country || "";
                         }
-                    } catch(e) { console.log("Geo lookup failed"); }
-                }, err => {
-                    console.log("Geo permission denied");
-                    state.city = "PERMISSION DENIED";
-                });
+                    } catch(e) {}
+                }, () => { state.city = "DENIED"; });
             }
         }
 
-        // --- 4. MEDIAPIPE & CANVAS RENDERER ---
+        // --- MEDIAPIPE & CANVAS ---
         const videoElement = document.querySelector('.input_video');
         const canvasElement = document.getElementById('main-canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
-            // Ensure canvas matches video resolution exactly (prevents alignment drift)
-            if (canvasElement.width !== videoElement.videoWidth) {
-                canvasElement.width = videoElement.videoWidth;
-                canvasElement.height = videoElement.videoHeight;
-            }
+            // FIX CRÍTICO PARA MÓVIL: Asegurar que el canvas tenga el tamaño de la ventana
+            canvasElement.width = window.innerWidth;
+            canvasElement.height = window.innerHeight;
 
-            // Draw Video
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
             
-            // Draw Dark Overlay (Sci-Fi look)
+            // Dibujar video (con object-fit cover simulado)
+            // Calculamos proporciones para mantener el aspect ratio sin deformar
+            const vidW = videoElement.videoWidth;
+            const vidH = videoElement.videoHeight;
+            const screenW = canvasElement.width;
+            const screenH = canvasElement.height;
+            const scale = Math.max(screenW / vidW, screenH / vidH);
+            const xOffset = (screenW - (vidW * scale)) / 2;
+            const yOffset = (screenH - (vidH * scale)) / 2;
+
+            canvasCtx.drawImage(results.image, xOffset, yOffset, vidW * scale, vidH * scale);
+            
+            // Overlay oscuro
             canvasCtx.fillStyle = "rgba(0, 10, 15, 0.3)";
-            canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.fillRect(0, 0, screenW, screenH);
 
             if (state.isTracking) {
-                // Hand Tracking
+                // Hands
                 if (results.leftHandLandmarks || results.rightHandLandmarks) {
-                    document.getElementById('hand-state').innerText = "TRACKING";
+                    document.getElementById('hand-state').innerText = "LOCK";
                     document.getElementById('hand-state').style.color = config.colors.safe;
-                    
                     drawHand(results.leftHandLandmarks);
                     drawHand(results.rightHandLandmarks);
                 } else {
-                    document.getElementById('hand-state').innerText = "SEARCHING";
+                    document.getElementById('hand-state').innerText = "SCAN";
                     document.getElementById('hand-state').style.color = "#fff";
                 }
 
-                // Face Tracking (Outline Only - NO EYES)
+                // Face
                 if (results.faceLandmarks) {
-                    document.getElementById('face-state').innerText = "LOCKED";
+                    document.getElementById('face-state').innerText = "ID OK";
                     document.getElementById('face-state').style.color = config.colors.safe;
-
-                    // Draw Face Mesh Contour
-                    drawConnectors(canvasCtx, results.faceLandmarks, FACEMESH_FACE_OVAL, 
-                        {color: 'rgba(0, 243, 255, 0.4)', lineWidth: 1});
                     
-                    // Face Crosshair
+                    drawConnectors(canvasCtx, results.faceLandmarks, FACEMESH_FACE_OVAL, {color: 'rgba(0, 243, 255, 0.4)', lineWidth: 1});
+                    
                     const nose = results.faceLandmarks[1];
-                    const x = nose.x * canvasElement.width;
-                    const y = nose.y * canvasElement.height;
-                    drawReticle(x, y);
-
+                    // Re-mapear coordenadas normalizadas a coordenadas de pantalla escaladas
+                    // Esto es complejo en "cover", usamos una aprox simple para efectos visuales:
+                    const nx = nose.x * screenW; 
+                    const ny = nose.y * screenH;
+                    
                     updateThreat(nose);
                 } else {
-                    document.getElementById('face-state').innerText = "SEARCHING";
+                    document.getElementById('face-state').innerText = "SCAN";
                     document.getElementById('face-state').style.color = "#fff";
                     updateThreat(null);
                 }
@@ -470,58 +424,22 @@
             drawLandmarks(canvasCtx, landmarks, {color: config.colors.safe, lineWidth: 1, radius: 2});
         }
 
-        function drawReticle(x, y) {
-            canvasCtx.strokeStyle = "rgba(0, 243, 255, 0.8)";
-            canvasCtx.lineWidth = 2;
-            canvasCtx.beginPath();
-            canvasCtx.moveTo(x-20, y); canvasCtx.lineTo(x+20, y);
-            canvasCtx.moveTo(x, y-20); canvasCtx.lineTo(x, y+20);
-            canvasCtx.stroke();
-            canvasCtx.beginPath();
-            canvasCtx.arc(x, y, 30, 0, Math.PI*2);
-            canvasCtx.setLineDash([5, 5]);
-            canvasCtx.stroke();
-            canvasCtx.setLineDash([]);
-        }
-
         function updateThreat(nose) {
             let movement = 0;
             if(nose) {
-                // Calculate movement delta
                 const delta = Math.sqrt(Math.pow(nose.x - state.lastNose.x, 2) + Math.pow(nose.y - state.lastNose.y, 2));
-                movement = delta * 200; // sensitivity
+                movement = delta * 200;
                 state.lastNose = {x: nose.x, y: nose.y};
             }
+            if(movement > 1.5) state.threatLevel += 3; else state.threatLevel -= 1;
+            if(state.threatLevel < 0) state.threatLevel = 0; if(state.threatLevel > 100) state.threatLevel = 100;
 
-            // Decay or boost threat
-            if(movement > 1) state.threatLevel += 2;
-            else state.threatLevel -= 1;
-            
-            // Clamp 0-100
-            if(state.threatLevel < 0) state.threatLevel = 0;
-            if(state.threatLevel > 100) state.threatLevel = 100;
-
-            // UI Update
             const bar = document.getElementById('threat-fill');
-            const lbl = document.getElementById('threat-label');
             bar.style.width = state.threatLevel + "%";
-            
-            if(state.threatLevel < 30) {
-                bar.style.backgroundColor = config.colors.safe;
-                lbl.innerText = "PASSIVE";
-                lbl.style.color = config.colors.safe;
-            } else if(state.threatLevel < 70) {
-                bar.style.backgroundColor = config.colors.warn;
-                lbl.innerText = "CAUTION";
-                lbl.style.color = config.colors.warn;
-            } else {
-                bar.style.backgroundColor = config.colors.danger;
-                lbl.innerText = "WARNING";
-                lbl.style.color = config.colors.danger;
-            }
+            bar.style.backgroundColor = state.threatLevel > 60 ? config.colors.danger : (state.threatLevel > 30 ? config.colors.warn : config.colors.safe);
         }
 
-        // --- 5. MATRIX ANIMATION ---
+        // --- SEQUENCES ---
         const matrixCanvas = document.getElementById('matrix-canvas');
         const mCtx = matrixCanvas.getContext('2d');
         let matrixInterval;
@@ -529,8 +447,8 @@
         function runMatrix() {
             matrixCanvas.width = window.innerWidth;
             matrixCanvas.height = window.innerHeight;
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&";
-            const fontSize = 16;
+            const chars = "010101XYZ$#@";
+            const fontSize = 14;
             const columns = matrixCanvas.width / fontSize;
             const drops = [];
             for(let x=0; x<columns; x++) drops[x] = 1;
@@ -540,7 +458,6 @@
                 mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
                 mCtx.fillStyle = "#0aff0a";
                 mCtx.font = fontSize + "px monospace";
-
                 for(let i=0; i<drops.length; i++) {
                     const text = chars.charAt(Math.floor(Math.random() * chars.length));
                     mCtx.fillText(text, i*fontSize, drops[i]*fontSize);
@@ -550,29 +467,17 @@
             }, 33);
         }
 
-        // --- 6. SEQUENCE CONTROLLER ---
         function initiateSequence() {
             AudioSys.init();
             AudioSys.play(200, 'triangle', 0.2);
-
-            // Hide HUD
             document.getElementById('hud-layer').style.opacity = '0';
             setTimeout(() => document.getElementById('hud-layer').style.display = 'none', 500);
-
-            // Start Matrix
+            
             document.getElementById('matrix-layer').style.display = 'block';
             runMatrix();
 
-            // Text Sequence
             const msgEl = document.getElementById('system-msg');
-            const msgs = [
-                "ACCESSING DEVICE DATA...",
-                "ANALYZING SUBJECT...",
-                "LINKING BIOMETRICS...",
-                "SEARCHING GLOBAL DATABASES...",
-                "MATCH FOUND."
-            ];
-
+            const msgs = ["ACCESSING DATA...", "ANALYZING FACE...", "TRIANGULATING GPS...", "MATCH FOUND."];
             let step = 0;
             const seq = setInterval(() => {
                 if(step < msgs.length) {
@@ -581,31 +486,23 @@
                     step++;
                 } else {
                     clearInterval(seq);
-                    finalCapture(); // Capture happens exactly here
+                    finalCapture();
                 }
             }, 1000);
         }
 
         function finalCapture() {
-            // CAPTURE IMAGE FROM CANVAS
-            // We use the last rendered frame from the canvas
             AudioSys.glitch();
             const dataUrl = canvasElement.toDataURL('image/png');
             document.getElementById('captured-image').src = dataUrl;
 
-            // Stop Matrix
             clearInterval(matrixInterval);
             document.getElementById('matrix-layer').style.display = 'none';
+            document.getElementById('result-layer').style.display = 'flex';
 
-            // Show Results
-            const resLayer = document.getElementById('result-layer');
-            resLayer.style.display = 'flex';
-            
-            // Populate Data
             document.getElementById('res-loc-city').innerText = `${state.city.toUpperCase()}, ${state.country.toUpperCase()}`;
             document.getElementById('res-loc-coords').innerText = `${state.lat} / ${state.lon}`;
-            document.getElementById('res-device').innerText = navigator.platform.toUpperCase();
-            document.getElementById('res-time').innerText = new Date().toLocaleString();
+            document.getElementById('res-time').innerText = new Date().toLocaleTimeString();
         }
 
         function showTruth() {
@@ -613,27 +510,20 @@
             document.getElementById('truth-layer').style.display = 'flex';
         }
 
-        // --- 7. BOOTSTRAP ---
-        gatherSystemData();
-        initGeolocation();
+        // --- INIT ---
+        gatherData();
+        initGeo();
 
         const holistic = new Holistic({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`});
-        holistic.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            enableSegmentation: false,
-            refineFaceLandmarks: false // NO EYES
-        });
+        holistic.setOptions({ modelComplexity: 0, smoothLandmarks: true, enableSegmentation: false, refineFaceLandmarks: false }); // Modelo ligero para móvil
         holistic.onResults(onResults);
 
         const camera = new Camera(videoElement, {
             onFrame: async () => { await holistic.send({image: videoElement}); },
-            width: 1280,
-            height: 720
+            width: 1280, height: 720 // MediaPipe ajustará esto internamente, nosotros manejamos el canvas
         });
         camera.start().then(() => {
             document.getElementById('sys-status').innerText = "ONLINE";
-            document.getElementById('sys-status').style.color = config.colors.safe;
         });
 
     </script>
